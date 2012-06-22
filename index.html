@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Animated United States map made with Raphael</title>   
+</head>
+<style type="text/css" media="all">
+	
+	body {
+		background: #eee;
+		color: #333;
+		width: 1000px;
+/*		box-model: border-box;*/
+/*		-webkit-box-model: border-box;*/
+/*		-moz-box-model: border-box;*/
+		margin: 0 auto;
+		padding: 2em;
+		font: 1em 'Myriad Pro';
+	}
+	
+	/* RESETS */
+	p {
+		margin: .25em 0;
+	}
+	
+	#key-wrapper {
+/*		background: #ccc;*/
+		padding: .5em 1em;
+		height: 1em;
+/*		border-bottom: .5em solid #ddd;*/
+		font-size: 2em;
+	}
+	
+	.clearfix:after {
+		content: '.';
+		display: block;
+		opacity: 0;
+		height: 0;
+	}
+	
+	.key-year, .key-state, .key-value {
+/*		padding: 1em;*/
+/*		display: block;*/
+/*		float: left;*/
+	}
+	
+	.key-year {
+		background: #444;
+		color: #fff;
+	}
+	
+	.key-state {
+		font-weight: bold;
+/*		text-shadow: 0px 4px 3px rgba(0,0,0,0.4),*/
+/*		             0px 8px 13px rgba(0,0,0,0.1),*/
+/*		             0px 18px 23px rgba(0,0,0,0.1);*/
+		text-shadow: .1em .1em .2em #fff;
+	}
+	.key-value {
+		color: #069;
+/*		float: right;*/
+	}
+	
+	.key-instructions {
+		color: #aaa;
+	}
+	
+	
+	#navigator ul {
+		font-size: 1.5em;
+		padding: 0;
+		margin: 0;
+		list-style-type: square;
+	}	
+	
+	#navigator a {
+		text-decoration: none;
+	}
+	
+	#navigator ul li {
+		display: inline;
+		padding: .25em .8em;
+		opacity: .5;
+	}
+	
+	#navigator ul li:hover {
+/*		background: #ddd;*/
+		opacity: 1;
+	}
+	
+	#navigator a:active {
+		color: inherit;
+	}
+	
+	#navigator ul li.active {
+/*		background: #ddd;*/
+		opacity: 1;
+		font-weight:bold;
+	}
+	
+	
+	#legend {
+		padding: 1em 2em;
+		background:#fff;
+		-moz-border-radius:8px;
+		-webkit-border-radius:8px;
+		border-radius:8px;
+		border: 4px solid #CCC;
+	}
+	
+	#legend {
+		list-style-type: none;
+	}
+	
+	#legend li {
+		margin: .5em;
+	}
+	
+	#legend a {
+		text-decoration: none;
+	}
+
+	.legend-icon {
+		margin-right: .5em;
+		float: left;
+		width: 2em;
+		height: 1em;
+		background: red;
+	}
+	
+	
+	
+	
+	#container {
+		position:relative;
+/*		width: 500px;*/
+/*		background: yellow;*/
+	}
+	
+	.popup {
+		position:absolute;
+		display:none;
+		background:#fff;
+		-moz-border-radius:8px;
+		-webkit-border-radius:8px;
+		border-radius:8px;
+/*		border: 4px solid hsla(33,80%,80%,.5);*/
+		border: 4px solid #CCC;
+		-webkit-box-shadow: 1px 1px 7px rgba(50, 50, 50, 0.75);
+		-moz-box-shadow:    1px 1px 7px rgba(50, 50, 50, 0.75);
+		box-shadow:         1px 1px 7px rgba(50, 50, 50, 0.75);
+	}
+	
+	.popup .key-state {
+		display: block;
+		float: left;
+		padding: 1em;
+		border-right: 1px dotted #fff;
+/*		background: #036;*/
+/*		color: white;*/
+		background: #e3e3e3;
+	}
+	
+	.popup .key-value {
+		display: block;
+		float: right;
+		padding: 1em;
+	}
+	
+	.popup .close {
+		display:block;
+		position:absolute;
+		top:-15px;
+		right:-15px;
+		width:34px;
+		height:34px;
+		text-indent:-9999px;
+		outline:none;
+		background:url(close.png) no-repeat;
+	}
+	
+	#bar {
+		background: #ddd;
+/*		-webkit-box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);*/
+/*		-moz-box-shadow:    1px 1px 5px rgba(0, 0, 0, 0.5);*/
+/*		box-shadow:         1px 1px 5px rgba(0, 0, 0, 0.5);*/
+		-moz-border-radius:8px;
+		-webkit-border-radius:8px;
+		border-radius:8px;
+		
+		
+	}
+	
+	#bar-value {
+		background: #069;
+		height: 1.2em;
+		width: 0;
+		-moz-border-radius:1em;
+		-webkit-border-radius:1em;
+		border-radius:1em;
+		
+	}
+	
+</style>
+<body>
+	
+	<h1>Implementing the Buffett Rule (S. 2059) and dedicating the revenue to infrastructure investments, job impact by state</h1>
+	
+	<nav id="navigator">
+		<ul id="list">
+		</ul>
+	</nav>
+	
+	<nav id="legend"></nav>
+	
+	<div id="key-wrapper" class="clearfix">
+		<div id="key">
+				<span class="key-instructions">Touch a state to show data.</span>
+				<!-- <span class="key-year"></span> -->
+				<span class="key-state"></span>
+				<span class="key-value"></span>
+		</div>
+	</div>
+	<div id="bar">
+		<div id="bar-value"></div>
+	</div>
+  	
+<div id="container"></div>
+
+
+
+<table><thead><tr><th scope="col"></th><th scope="col">2013</th><th scope="col">2014</th><th scope="col">2015</th><th scope="col">2016*</th><th scope="col">2017*</th></tr></thead><tbody><tr class="table-total"><th scope="row">Total</th><td>42,756</td><td>87,420</td><td>91,543</td><td>97,008</td><td>102,291</td></tr><tr><th scope="row">Alabama</th><td>700</td><td>1,430</td><td>1,498</td><td>1,587</td><td>1,674</td></tr><tr><th scope="row">Alaska</th><td>113</td><td>231</td><td>242</td><td>256</td><td>270</td></tr><tr><th scope="row">Arizona</th><td>752</td><td>1,537</td><td>1,609</td><td>1,705</td><td>1,798</td></tr><tr><th scope="row">Arkansas</th><td>434</td><td>888</td><td>929</td><td>985</td><td>1,039</td></tr><tr><th scope="row">California</th><td>3,569</td><td>7,296</td><td>7,640</td><td>8,097</td><td>8,538</td></tr><tr><th scope="row">Colorado</th><td>725</td><td>1,482</td><td>1,552</td><td>1,645</td><td>1,734</td></tr><tr><th scope="row">Connecticut</th><td>377</td><td>771</td><td>808</td><td>856</td><td>903</td></tr><tr><th scope="row">Delaware</th><td>143</td><td>293</td><td>307</td><td>325</td><td>343</td></tr><tr><th scope="row">District of Columbia</th><td>274</td><td>560</td><td>586</td><td>621</td><td>655</td></tr><tr><th scope="row">Florida</th><td>2,218</td><td>4,536</td><td>4,749</td><td>5,033</td><td>5,307</td></tr><tr><th scope="row">Georgia</th><td>1,313</td><td>2,685</td><td>2,812</td><td>2,980</td><td>3,142</td></tr><tr><th scope="row">Hawaii</th><td>204</td><td>416</td><td>436</td><td>462</td><td>487</td></tr><tr><th scope="row">Idaho</th><td>219</td><td>449</td><td>470</td><td>498</td><td>525</td></tr><tr><th scope="row">Illinois</th><td>1,797</td><td>3,674</td><td>3,847</td><td>4,077</td><td>4,299</td></tr><tr><th scope="row">Indiana</th><td>1,067</td><td>2,182</td><td>2,284</td><td>2,421</td><td>2,553</td></tr><tr><th scope="row">Iowa</th><td>577</td><td>1,180</td><td>1,236</td><td>1,309</td><td>1,381</td></tr><tr><th scope="row">Kansas</th><td>483</td><td>987</td><td>1,034</td><td>1,096</td><td>1,155</td></tr><tr><th scope="row">Kentucky</th><td>682</td><td>1,395</td><td>1,461</td><td>1,548</td><td>1,632</td></tr><tr><th scope="row">Louisiana</th><td>714</td><td>1,460</td><td>1,529</td><td>1,620</td><td>1,708</td></tr><tr><th scope="row">Maine</th><td>221</td><td>451</td><td>473</td><td>501</td><td>528</td></tr><tr><th scope="row">Maryland</th><td>707</td><td>1,445</td><td>1,514</td><td>1,604</td><td>1,691</td></tr><tr><th scope="row">Massachusetts</th><td>926</td><td>1,894</td><td>1,984</td><td>2,102</td><td>2,217</td></tr><tr><th scope="row">Michigan</th><td>1,369</td><td>2,799</td><td>2,931</td><td>3,106</td><td>3,275</td></tr><tr><th scope="row">Minnesota</th><td>887</td><td>1,813</td><td>1,898</td><td>2,012</td><td>2,121</td></tr><tr><th scope="row">Mississippi</th><td>410</td><td>838</td><td>877</td><td>930</td><td>981</td></tr><tr><th scope="row">Missouri</th><td>972</td><td>1,987</td><td>2,081</td><td>2,205</td><td>2,325</td></tr><tr><th scope="row">Montana</th><td>162</td><td>331</td><td>347</td><td>368</td><td>388</td></tr><tr><th scope="row">Nebraska</th><td>359</td><td>733</td><td>768</td><td>814</td><td>858</td></tr><tr><th scope="row">Nevada</th><td>359</td><td>733</td><td>768</td><td>814</td><td>858</td></tr><tr><th scope="row">New Hampshire</th><td>201</td><td>411</td><td>430</td><td>456</td><td>481</td></tr><tr><th scope="row">New Jersey</th><td>932</td><td>1,906</td><td>1,996</td><td>2,115</td><td>2,230</td></tr><tr><th scope="row">New Mexico</th><td>298</td><td>609</td><td>638</td><td>676</td><td>713</td></tr><tr><th scope="row">New York</th><td>2,615</td><td>5,346</td><td>5,598</td><td>5,932</td><td>6,255</td></tr><tr><th scope="row">North Carolina</th><td>1,388</td><td>2,838</td><td>2,972</td><td>3,149</td><td>3,321</td></tr><tr><th scope="row">North Dakota</th><td>162</td><td>330</td><td>346</td><td>367</td><td>387</td></tr><tr><th scope="row">Ohio</th><td>1,876</td><td>3,836</td><td>4,017</td><td>4,257</td><td>4,488</td></tr><tr><th scope="row">Oklahoma</th><td>587</td><td>1,201</td><td>1,258</td><td>1,333</td><td>1,405</td></tr><tr><th scope="row">Oregon</th><td>575</td><td>1,176</td><td>1,232</td><td>1,305</td><td>1,376</td></tr><tr><th scope="row">Pennsylvania</th><td>1,990</td><td>4,069</td><td>4,261</td><td>4,515</td><td>4,761</td></tr><tr><th scope="row">Rhode Island</th><td>155</td><td>317</td><td>331</td><td>351</td><td>370</td></tr><tr><th scope="row">South Carolina</th><td>681</td><td>1,393</td><td>1,459</td><td>1,546</td><td>1,630</td></tr><tr><th scope="row">South Dakota</th><td>160</td><td>326</td><td>342</td><td>362</td><td>382</td></tr><tr><th scope="row">Tennessee</th><td>973</td><td>1,990</td><td>2,084</td><td>2,209</td><td>2,329</td></tr><tr><th scope="row">Texas</th><td>3,474</td><td>7,103</td><td>7,438</td><td>7,882</td><td>8,311</td></tr><tr><th scope="row">Utah</th><td>443</td><td>905</td><td>948</td><td>1,004</td><td>1,059</td></tr><tr><th scope="row">Vermont</th><td>106</td><td>217</td><td>228</td><td>241</td><td>254</td></tr><tr><th scope="row">Virginia</th><td>1,099</td><td>2,246</td><td>2,352</td><td>2,493</td><td>2,629</td></tr><tr><th scope="row">Washington</th><td>899</td><td>1,838</td><td>1,925</td><td>2,040</td><td>2,151</td></tr><tr><th scope="row">West Virginia</th><td>298</td><td>609</td><td>638</td><td>676</td><td>713</td></tr><tr><th scope="row">Wisconsin</th><td>1,009</td><td>2,064</td><td>2,161</td><td>2,290</td><td>2,415</td></tr><tr><th scope="row">Wyoming</th><td>103</td><td>211</td><td>221</td><td>234</td><td>247</td></tr></tbody></table>
+
+
+
+
+
+
+
+
+<script src="raphael-min.js"></script>
+<script src="us-map-svg.js"></script>
+<script src="jquery.min.js"></script>
+
+<script>
+  // window.onload = function () {
+	
+	/****************************************************
+		Parse the data from an HTML table and turn it into a JSON object.
+		
+		@method tableToData()
+		@param jQuery selector for a table {string}
+		@return JSON object containing data points and labels
+	****************************************************/
+		var tableToData = function(tableSelector){
+			var $table = $(tableSelector);			
+			if (!$table.length) {return;}
+			
+			var tableData = {};	
+			
+			var colTitles = [];
+			var rowTitles = [];
+			
+			var colSeries = {};
+			var rowSeries = {};
+			
+			var numberOfColsToSkip = 1;
+			
+			// Make an array of the column titles
+			$table.find('thead th').each(function(col){
+				if (col >= numberOfColsToSkip) {
+					var colTitle = $(this).text();
+					colTitles.push($(this).text());
+					// Start an array for this column's values
+					colSeries[colTitle] = [];
+				}
+			});
+			
+			// console.log(colTitles);console.log
+			
+			// Loop through table rows
+			$table.find('tbody tr:not(.table-total)').each(function(row){
+				var $row = $(this);
+				
+				// Record the row title
+				var rowTitle = $.trim($('th', $row).text());
+				tableData[rowTitle] = {};
+				rowTitles.push(rowTitle);
+				// Start an array for this row's values
+				rowSeries[rowTitle] = [];
+
+				// Loop through the data cells in the current row
+				$('td', $row).each(function(colIndex){
+					var value = parseFloat($(this).text().replace(',', ''));
+
+					// Store the value in the data object
+					tableData[rowTitle][colTitles[colIndex]] = value;
+
+					// Store this row's values in an array
+					rowSeries[rowTitle].push(value);
+
+					// Store this column's values in an array
+					colSeries[colTitles[colIndex]].push(value);
+				});
+				
+			});
+			
+			
+			
+			/****************************************************
+				Calculate the min, max, range, count, and mean of the values in an array.
+
+				@method data.fn.calculate()
+				@param Array of numerical data values {array}
+				@return JSON object containing the series' min, max, range, count, and mean
+			****************************************************/
+			
+			
+			tableData.fn = {};
+			tableData.fn.calculate = function(series){
+				// if (!results.length) { return; }
+				var results = {};
+				results.min = 99999999999;
+				results.max = -9999999999;
+				results.count = series.length;
+				
+				for ( var i = 0; i < series.length; i++ ) {
+					if (series[i] < results.min) {
+						results.min = series[i];
+					}
+					if (series[i] > results.max) {
+						results.max = series[i];
+					}
+				}
+				
+				results.range = results.max - results.min;
+				
+				return results;
+			}
+			
+			tableData.info = {
+				title: 'This is the chart title',
+				x: {
+					categories: rowTitles,
+					series: rowSeries,
+					calculations: {}
+				},
+				y: {
+					categories: colTitles,
+					series: colSeries,
+					calculations: {}
+				}	
+			}
+			
+			tableData.info.min = 999999999999;
+			tableData.info.max = -99999999999;
+			
+			for (category in tableData.info.x.series) {
+				tableData.info.x.calculations[category] = tableData.fn.calculate(tableData.info.x.series[category]);
+				
+				// console.log('min', tableData.info.x.calculations[category]);
+				
+				if (tableData.info.x.calculations[category].min < tableData.info.min)
+					tableData.info.min = tableData.info.x.calculations[category].min;
+				if (tableData.info.x.calculations[category].max > tableData.info.max)
+					tableData.info.max = tableData.info.x.calculations[category].max;
+				
+				tableData.info.range = tableData.info.max - tableData.info.min;
+					
+				// tableData.info.x.mins.push(tableData.info.x.series[category].min);
+				// tableData.info.x.maxes.push(tableData.info.x.series[category].max);
+			}
+			for (category in tableData.info.y.series) {
+				tableData.info.y.calculations[category] = tableData.fn.calculate(tableData.info.y.series[category]);
+			}			 
+			
+			console.log(tableData);
+			return tableData;
+		}
+	
+	var tableData = tableToData('table');
+	
+	
+	
+	
+	/****************************************************
+		Default map styles
+	****************************************************/
+	
+	var attr = attr || {};
+	
+	attr.default = {
+		"fill-opacity": "1",
+		"cursor": "pointer",
+		// "fill": "hsla(100,50,50,1)",
+		// "fill": "#ccc",
+		"stroke": "#fff",
+		"stroke-opacity": "1",
+		"stroke-linejoin": "miter", // bevel, miter, round
+		"stroke-linecap": "square", // butt, square, round
+		"stroke-miterlimit": "4",
+		"stroke-width": "1.4",
+		"stroke-dasharray": "", // [“”, “-”, “.”, “-.”, “-..”, “. ”, “- ”, “--”, “- .”, “--.”, “--..”]
+		// "transform": ""
+    };
+
+	attr.hover = {
+		"stroke": '#FFCC00',
+		"stroke-width": "5",
+		// "stroke-opacity": ".5",
+		"fill-opacity": ".8",
+		// "transform": "s1.2"
+	}
+
+    
+	/****************************************************
+		Initialize Raphael, draw map, and store SVG paths
+		
+		@method
+		@param Object containing SVG paths {object}
+			key: state name
+			value: SVG path
+		@return
+	****************************************************/
+
+	var R = Raphael("container", 1000, 900);
+	var map = {};
+	
+    for (var state in mapData) {
+      map[state] = R.path(mapData[state]['path']).attr(attr.default);
+    }
+
+
+	
+	/****************************************************
+	Given a value and a range, this will return a decimal between 0 and 1.
+	
+	@method numberToPercent
+	@param Options {object}
+		value
+		min
+		max
+		multiplier?
+		normalize?
+		exponent?
+	@return {number}
+	****************************************************/
+	
+	// var dataPercent = ((stateDataVal - tableData.info.min) / tableData.info.range) * .993;
+
+	tableData.fn.numberToPercent = function(number, options) {
+		var options = options || {
+			min: tableData.info.min,
+			max: tableData.info.max
+		};
+		
+		var calculation = (number - options.min) / (options.max - options.min) * .993;
+		return calculation;
+	};
+
+
+	/****************************************************
+
+		@method calculateColor
+		@param number (between 0 and 1) {number}
+		@param Options {object}
+			value (between 0 and 1)
+			start color
+			end color
+		@return hsb color {string}
+	****************************************************/
+	tableData.fn.calculateColor = function(number, options){
+			
+			var options = options || {};
+			
+			options.min = options.min || 'hsl(280,70,85)';
+			options.max = options.max || 'hsl(260,50,20)';
+			
+			var color = {};			
+			
+			color.data = number;
+			color.options = {};
+			color.options.invert = options.invert || false;
+			color.options.exponent = options.exponent || 2;
+
+			var regex = /hsl\((\d+),(\d+),(\d+)\)/i;
+			var min = options.min.match(regex);
+			var max = options.max.match(regex);
+						
+			color.h = {
+				min: parseInt(min[1]),
+				max: parseInt(max[1])
+			};
+			color.s = {
+				min: parseInt(min[2]),
+				max: parseInt(max[2])
+			};
+			color.l = {
+				min: parseInt(min[3]),
+				max: parseInt(max[3])
+			};
+
+			
+			for (prop in color) {
+				if (prop !== "data" && prop !== "options") {
+					color[prop].range 	= color[prop].max - color[prop].min;
+					color[prop].val 	= color[prop].min + (color[prop].range * color.data ^ color.exponent);
+					if (color.invert) {
+						color[prop].val = color[prop].max - (color[prop].range * color.data ^ color.exponent);
+					}
+				}
+			}
+
+			return 'hsl('+color.h.val+','+color.s.val+','+color.l.val+'%)';
+			// return "hsl(282,50,50%)";
+	}
+    
+	/****************************************************
+		Color the map and attach data-display events to mouseover and click
+
+		@method applyData
+		@param 
+		@return
+	****************************************************/
+	tableData.fn.applyData = function(options){ 
+		var options = options || {};
+		options.data = options.data || tableData, // TODO: pass this into the function
+		options.year = options.year || tableData.info.y.categories[0] // Defaults to first category			
+		
+		svgMap.setYear(options.year);
+		
+	    for (var state in map) {
+
+			var stateName = mapData[state]['name'];
+			var stateDataVal = tableData[stateName][options.year];
+			var dataPercent = tableData.fn.numberToPercent(stateDataVal);
+			var stateColor = tableData.fn.calculateColor(dataPercent);
+
+	 		(function(raphaelObject, stateKey) {
+				var svg = raphaelObject[0];
+				
+				// Color the map
+				raphaelObject.animate({
+					fill: stateColor
+				}, 0);
+     			
+
+				/****************************************************
+					Attach click events
+				****************************************************/
+
+				$('html').click(function() {
+				 	//Hide the popup if visible
+					$('.popup').fadeOut(function(){
+						$(this).remove();
+					});
+				 });
+
+				 // $('#container').click(function(event){
+				 //     event.stopPropagation();
+				 // });
+				
+				
+	 			svg.onclick = function (event) {	
+					event.stopPropagation(); // lets us click outside of the SVG to close the popup, without triggering bla....
+					svgMap.showPopup(stateKey, options.year);
+	 			};
+     			
+				/****************************************************
+					Attach mouseover/mouseout events
+				****************************************************/
+				
+	 			svgMap.highlight = function (event) {
+					svgMap.updateKey(stateKey, options.year);
+					svgMap.updateBar(stateKey, options.year);
+					svgMap.select(raphaelObject);
+	 			};
+	
+				svgMap.unHighlight = function (event) {
+					svgMap.deselect(raphaelObject);
+	 			};
+     			
+				
+				svg.onmouseover = svgMap.highlight;
+     			svg.onmouseout	= svgMap.unHighlight;
+				
+
+	 		})(map[state], state);
+	    }
+	};
+	
+	var svgMap = svgMap || {};
+	
+	svgMap.setYear = function(year) {
+		
+	};
+	
+	svgMap.updateKey = function(stateKey, year) {
+		var stateName = mapData[stateKey]['name'];
+		var stateDataVal = tableData[stateName][year];
+		var dataPercent = tableData.fn.numberToPercent(stateDataVal);
+
+		// $('#key').stop().animate({opacity: 0}, 0)
+		$('#key')
+		.find('.key-year').html(year).end()
+		.find('.key-state').html(stateName).end()
+		.find('.key-value').html(stateDataVal);
+
+		$('#key').find('.key-instructions').hide();
+	
+		// $('#key').stop().animate({opacity: 1}, 500);
+		$('#key').fadeIn(200);
+		
+	};
+		
+	svgMap.updateBar = function(stateKey, year) {
+		var stateName = mapData[stateKey]['name'];
+		var stateDataVal = tableData[stateName][year];
+		var dataPercent = tableData.fn.numberToPercent(stateDataVal);
+
+		$('#bar-value').stop().animate({
+			width: dataPercent*100+'%'
+		}, 200);
+	};
+	
+	svgMap.deselect = function(states, options){
+		// var options = options || {};
+			
+		var input = Object.toType(states);
+		
+		if (input === 'object')
+			var raphaelObject = states;
+		if (input === 'string')
+			var raphaelObject = map[states];
+		if (input === 'undefined') {
+			// none specified, so deselect all states (recursion)
+			states = [];
+			for (var state in map)
+				states.push(state)
+			svgMap.deselect(states);
+			return;
+		}
+		if (input === 'array') {
+			$(states).each(function(i){ svgMap.deselect(states[i]) }); 
+			return;
+		}
+		
+		raphaelObject.stop();
+				
+			// $('#key').hide();
+			raphaelObject.animate( attr.default, 500);
+			raphaelObject.toFront();
+			R.safari();
+			
+	};
+	
+	// var my = my || {};
+	// my.util = my.util || {};
+	// my.util.removeFromArray = function(array, remove)
+	
+	Array.prototype.remove = function(value_to_remove) {	
+		this.splice(this.indexOf(value_to_remove), 1);
+		return this;
+	}
+	
+	
+	svgMap.deactivateOthers = function(state_to_keep){
+			// delete map[state_to_keep]; // Can't do this because it changes the original object, and it is very annoying/complicated to clone an object in javascript
+			
+			// This would work if we have jQuery and want to return an object
+			// var abridged_map = $.extend({}, map);
+			// delete abridged_map[state_to_keep];
+			
+			var states = [];
+			for (var state in map) 
+				states.push(state);
+
+			states.remove(state_to_keep); // Relies on custom utility method "remove" we have added to Array.prototype
+			svgMap.deactivate(states);
+	}
+	
+	
+	svgMap.selectByData = function(options){
+		// options.min
+		// options.max
+		// options.value
+		
+		
+		
+	}
+	
+	/****************************************************
+	Attach IDs, classes, and table data to state SVGs, using jQuery  
+	****************************************************/
+	
+	var $states = (function(map){
+		var jstates = [];
+		for (var state in map) {
+			var $svg = $(map[state][0]);
+			$svg.attr({
+				id: state,
+				'class': 'state'
+				// 'data-state': state
+			});
+			
+			// this uses vars defined above - tableData and stateName
+			$svg.data(tableData[mapData[state]['name']]);
+			jstates.push(map[state][0]); // this would return a non-jquery array of svgs
+			// jstates.push($svg);
+		}
+		return $(jstates);
+	})(map);
+	
+	
+	svgMap.deactivate = function(states){
+		var input = Object.toType(states);
+		
+		if (input === 'object')
+			var raphaelObject = states;
+		if (input === 'string')
+			var raphaelObject = map[states];
+		if (input === 'array') {
+			$(states).each(function(i){ svgMap.deactivate(states[i]) }); 
+			return;
+		}
+		
+		var svg = raphaelObject[0];
+
+		svg.onclick = undefined;
+		svg.onmouseover = undefined;
+		svg.onmouseout = undefined;
+		
+		raphaelObject.attr({cursor: 'default'});
+		
+		
+		// This should be moved into a separate method, i.e., svgMap.hideColor
+		// And original function should be put into separate svgMap.applyColor
+		raphaelObject.animate({
+			fill: '#ccc',
+			// cursor: 'default' // this doesn't seem to work here
+		});
+	};
+		
+	
+	svgMap.reactivate = function(states){
+		svg.onclick = svgMap.showPopup;
+		svg.onmouseover = svgMap.highlight;
+		svg.onmouseout = svgMap.unHighlight;
+		
+	};
+		
+	
+	Object.toType = function(obj) {
+	  return ({}).toString.call(obj).match(/\s([a-z|A-Z]+)/)[1].toLowerCase();
+	}
+	
+	
+	/****************************************************
+	Selects a state, applying hover styles and animations
+	
+	@method select
+	@param Raphael object {object} 
+		OR object key like 'md' {string}
+		OR array of keys like ['md', 'va', 'ut'] {array}
+		OR array of Raphael objects {array}
+	
+	****************************************************/
+	svgMap.select = function(states, options){
+		var options = options || {}
+		options.multiple = false;
+		
+		
+		// console.log(Object.toType(states));
+		var input = Object.toType(states);
+		
+		if (input === 'object')
+			var raphaelObject = states;
+		if (input === 'string')
+			var raphaelObject = map[states];
+		if (input === 'array') {
+			$(states).each(function(i){ svgMap.select(states[i]) }); 
+			return;
+		}
+		
+		
+		
+		
+		raphaelObject.stop();
+		raphaelObject.animate(attr.hover, 1000, 'elastic');
+		raphaelObject.toFront();
+		R.safari();
+		
+		
+		if (!options.multiple) {
+			// svgMap.deselect(states, {invert: true});
+		}
+		
+		
+		
+	};
+	
+	/****************************************************
+	Shows a state popup
+	
+	@method showPopup
+	@param Raphael object {object} 
+		OR object key like 'md' {string}
+	@param year {number}
+	
+	****************************************************/
+	svgMap.showPopup = function(states){
+		var input = Object.toType(states);
+		
+		if (input === 'object')
+			var raphaelObject = states;
+		if (input === 'string')
+			var raphaelObject = map[states];
+		
+		var bbox = raphaelObject.getBBox(0);
+		
+		$('.popup').remove();
+		
+		$('#container').append($('<div />').addClass('popup'));
+
+		$('.popup').html($('#key').html())
+		.prepend($('<a />').attr('href', '#').addClass('close').text('Close'))
+		.css({
+			position: 'absolute',
+			left: bbox.x+(bbox.width/2)-80,
+			top: bbox.y+(bbox.height/2)-20
+		})
+		.fadeIn();
+		
+		$('.popup :not(a:not(.close))').live('click', function(){
+			var $parent = $(this).closest('.popup');
+			$parent.fadeOut(function(){
+				$parent.remove();
+			});
+			
+			return false;
+		});
+	};
+	
+	
+
+	tableData.fn.createNavigation = function(){
+		// var defaultActive = 0;
+		
+		$(tableData.info.y.categories).each(function(i){
+			$('<li><a href="#'+this+'">'+this+'</a></li>')
+			.addClass(function(){ if (i === 0) return 'active'; })
+			.click(function(){
+				var $this = $(this);
+				var safeName = $this.text()
+				$this.addClass('active');
+				$this.attr({id: safeName});
+				$this.siblings().removeClass('active');
+				tableData.fn.applyData({
+					data: tableData,
+					year: tableData.fn.convertTextToHash(safeName)
+				});
+			}).appendTo('#navigator ul');
+		});
+	};
+	
+	tableData.fn.convertTextToHash = function(text){
+		// var text = text.replace(/\*/gi, '');  // this wouldn't work because 2014 and 2018* were being treated as different types—string and number. I couldn't figure it out... 2012-06-04 20:18:04
+		var text = encodeURIComponent(text);
+		// console.log(text);
+		return text;
+	}
+	
+	tableData.fn.createLegend = function(options){
+		
+		$(options.items).each(function(i){
+			var min = this.min;
+			var max = this.max;
+			var value = this.value;
+			var label = this.label;
+			
+			var number = (max - min) / 2;
+			var number = value ? value : number;
+				number = tableData.fn.numberToPercent(number);
+			var color = tableData.fn.calculateColor(number);
+			 	color = color.replace(/(\d),(\d*)%/, '$1%,$2%');
+			console.log(number, color);
+			
+			$('<li />')
+			.prepend('<a href="#' + min + '-' + max + '"><div class="legend-icon" />' + label + '</a>')
+			.find('.legend-icon').css({backgroundColor: color}).end()
+			.click(function(){
+				var $this = $(this);
+				
+				svgMap.deselect();
+				
+				$states.filter(function(){
+					var selectedYear = $('#navigator .active').attr('id');
+					console.log('selectedYear',selectedYear);
+					var stateValue = $(this).data(selectedYear); // need to get the year dynamically
+					if (stateValue > min && stateValue < max) {
+						var state = $(this).attr('id');
+						svgMap.select(state);
+						return true;
+					}
+				});
+
+			}).appendTo('#legend');
+		});
+	};
+	
+	
+	
+	
+	
+	// Initialize the map
+	
+	tableData.fn.applyData();
+	tableData.fn.createNavigation();
+	tableData.fn.createLegend({
+		items: [
+		{
+			label: 'Up to 500',
+			min: 0,
+			max: 500,
+			value: 100 
+		}, 
+		{
+			label: '500 to 1,000',
+			min: 500,
+			max: 1000
+		}, 
+		{
+			label: '1,000 to 5,000',
+			min: 1000,
+			max: 5000
+		}, 
+		{
+			label: '5,000 to 10,000',
+			min: 5000,
+			max: 10000
+		}, 
+		]
+	});
+	
+</script>
+
+
+
+</body>
+</html>
